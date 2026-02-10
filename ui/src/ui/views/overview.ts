@@ -1,6 +1,9 @@
 import { html } from "lit";
 import { ConnectErrorDetailCodes } from "../../../../src/gateway/protocol/connect-error-details.js";
 import { t, i18n, type Locale } from "../../i18n/index.ts";
+import type { GatewayHelloOk } from "../gateway.ts";
+import type { UiSettings } from "../storage.ts";
+import type { HealthSnapshot } from "../types.ts";
 import { formatRelativeTimestamp, formatDurationHuman } from "../format.ts";
 import type { GatewayHelloOk } from "../gateway.ts";
 import { formatNextRun } from "../presenter.ts";
@@ -19,6 +22,7 @@ export type OverviewProps = {
   cronEnabled: boolean | null;
   cronNext: number | null;
   lastChannelsRefresh: number | null;
+  health: HealthSnapshot | null;
   onSettingsChange: (next: UiSettings) => void;
   onPasswordChange: (next: string) => void;
   onSessionKeyChange: (next: string) => void;
@@ -69,6 +73,10 @@ export function renderOverview(props: OverviewProps) {
     `;
   })();
 
+  const uptime = snapshot?.uptimeMs ? formatDurationHuman(snapshot.uptimeMs) : "n/a";
+  const tick = snapshot?.policy?.tickIntervalMs ? `${snapshot.policy.tickIntervalMs}ms` : "n/a";
+  const vectraHealth = ((props.health as { vectra?: Record<string, unknown> } | null)?.vectra ??
+    null) as Record<string, unknown> | null;
   const authHint = (() => {
     if (props.connected || !props.lastError) {
       return null;
@@ -310,13 +318,14 @@ export function renderOverview(props: OverviewProps) {
             : html`
                 <div class="callout" style="margin-top: 14px">
                   ${t("overview.snapshot.channelsHint")}
+                  Use Channels to link WhatsApp, Telegram, Discord, Signal, or iMessage. Vectra can be integrated as a custom/plugin channel bridge.
                 </div>
               `
         }
       </div>
     </section>
 
-    <section class="grid grid-cols-3" style="margin-top: 18px;">
+    <section class="grid grid-cols-4" style="margin-top: 18px;">
       <div class="card stat-card">
         <div class="stat-label">${t("overview.stats.instances")}</div>
         <div class="stat-value">${props.presenceCount}</div>
@@ -333,6 +342,21 @@ export function renderOverview(props: OverviewProps) {
           ${props.cronEnabled == null ? t("common.na") : props.cronEnabled ? t("common.enabled") : t("common.disabled")}
         </div>
         <div class="muted">${t("overview.stats.cronNext", { time: formatNextRun(props.cronNext) })}</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-label">Vectra Health</div>
+        <div class="stat-value ${vectraHealth?.ok === true ? "ok" : "warn"}">
+          ${vectraHealth ? (vectraHealth.ok === true ? "OK" : "Issue") : "n/a"}
+        </div>
+        <div class="muted">
+          ${
+            vectraHealth
+              ? (vectraHealth.detected === true
+                  ? (vectraHealth.workspace as string | undefined) ?? "workspace detected"
+                  : "Vectra not detected")
+              : "No health snapshot yet"
+          }
+        </div>
       </div>
     </section>
 

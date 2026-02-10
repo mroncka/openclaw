@@ -19,6 +19,11 @@ import { normalizeAgentId } from "../routing/session-key.js";
 import type { RuntimeEnv } from "../runtime.js";
 import { styleHealthChannelLine } from "../terminal/health-style.js";
 import { isRich } from "../terminal/theme.js";
+import { theme } from "../terminal/theme.js";
+import { promises as fs } from "node:fs";
+import { resolve } from "node:path";
+import { execFile as execFileCb } from "node:child_process";
+import { promisify } from "node:util";
 
 export type ChannelAccountHealthSummary = {
   accountId: string;
@@ -44,6 +49,16 @@ export type AgentHealthSummary = {
   sessions: HealthSummary["sessions"];
 };
 
+export type VectraHealthSummary = {
+  detected: boolean;
+  ok: boolean;
+  workspace?: string;
+  command?: string;
+  output?: string;
+  error?: string;
+  checkedAt: number;
+};
+
 export type HealthSummary = {
   /**
    * Convenience top-level flag for UIs (e.g. WebChat) that only need a binary
@@ -56,6 +71,7 @@ export type HealthSummary = {
   channels: Record<string, ChannelHealthSummary>;
   channelOrder: string[];
   channelLabels: Record<string, string>;
+  vectra?: VectraHealthSummary;
   /** Legacy: default agent heartbeat seconds (rounded). */
   heartbeatSeconds: number;
   defaultAgentId: string;
@@ -345,6 +361,62 @@ export const formatHealthChannelLines = (
   return lines;
 };
 
+const execFile = promisify(execFileCb);
+
+async function probeVectraHealth(): Promise<VectraHealthSummary> {
+  const checkedAt = Date.now();
+  const cwd = process.cwd();
+  const candidates = [cwd, resolve(cwd, ".."), resolve(cwd, "../..")];
+
+  let vectraDir: string | null = null;
+  for (const dir of candidates) {
+    try {
+      await fs.access(resolve(dir, "vectra.mjs"));
+      vectraDir = dir;
+      break;
+    } catch {
+      // continue
+    }
+  }
+
+  if (!vectraDir) {
+    return {
+      detected: false,
+      ok: false,
+      checkedAt,
+      error: "vectra.mjs not found near OpenClaw workspace",
+    };
+  }
+
+  try {
+    const { stdout, stderr } = await execFile("node", ["vectra.mjs", "status"], {
+      cwd: vectraDir,
+      timeout: 8000,
+      windowsHide: true,
+      maxBuffer: 128 * 1024,
+    });
+    const output = `${stdout ?? ""}${stderr ? `\n${stderr}` : ""}`.trim();
+    return {
+      detected: true,
+      ok: true,
+      workspace: vectraDir,
+      command: "node vectra.mjs status",
+      output: output.slice(0, 600),
+      checkedAt,
+    };
+  } catch (err) {
+    const msg = formatErrorMessage(err);
+    return {
+      detected: true,
+      ok: false,
+      workspace: vectraDir,
+      command: "node vectra.mjs status",
+      error: msg,
+      checkedAt,
+    };
+  }
+}
+
 export async function getHealthSnapshot(params?: {
   timeoutMs?: number;
   probe?: boolean;
@@ -502,6 +574,8 @@ export async function getHealthSnapshot(params?: {
     }
   }
 
+  const vectra = await probeVectraHealth();
+
   const summary: HealthSummary = {
     ok: true,
     ts: Date.now(),
@@ -509,6 +583,7 @@ export async function getHealthSnapshot(params?: {
     channels,
     channelOrder,
     channelLabels,
+    vectra,
     heartbeatSeconds,
     defaultAgentId,
     agents,
