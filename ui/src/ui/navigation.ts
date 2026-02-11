@@ -5,7 +5,7 @@ export const TAB_GROUPS = [
   { label: "chat", tabs: ["chat"] },
   {
     label: "control",
-    tabs: ["overview", "channels", "instances", "sessions", "usage", "cron"],
+    tabs: ["overview", "channels", "instances", "sessions", "usage", "cron", "tasks"],
   },
   { label: "agent", tabs: ["agents", "skills", "nodes"] },
   { label: "settings", tabs: ["config", "debug", "logs"] },
@@ -19,6 +19,7 @@ export type Tab =
   | "sessions"
   | "usage"
   | "cron"
+  | "tasks"
   | "skills"
   | "nodes"
   | "chat"
@@ -34,6 +35,7 @@ const TAB_PATHS: Record<Tab, string> = {
   sessions: "/sessions",
   usage: "/usage",
   cron: "/cron",
+  tasks: "/tasks",
   skills: "/skills",
   nodes: "/nodes",
   chat: "/chat",
@@ -141,6 +143,8 @@ export function iconForTab(tab: Tab): IconName {
       return "barChart";
     case "cron":
       return "loader";
+    case "tasks":
+      return "fileText";
     case "skills":
       return "zap";
     case "nodes":
@@ -161,5 +165,36 @@ export function titleForTab(tab: Tab) {
 }
 
 export function subtitleForTab(tab: Tab) {
-  return t(`subtitles.${tab}`);
+  switch (tab) {
+    case "agents":
+      return "Manage agent workspaces, tools, and identities.";
+    case "overview":
+      return "Gateway status, entry points, and a fast health read.";
+    case "channels":
+      return "Manage channels and settings.";
+    case "instances":
+      return "Presence beacons from connected clients and nodes.";
+    case "sessions":
+      return "Inspect active sessions and adjust per-session defaults.";
+    case "usage":
+      return "";
+    case "cron":
+      return "Schedule wakeups and recurring agent runs.";
+    case "tasks":
+      return "AI-first planning board for outcomes, priorities, and lane execution.";
+    case "skills":
+      return "Manage skill availability and API key injection.";
+    case "nodes":
+      return "Paired devices, capabilities, and command exposure.";
+    case "chat":
+      return "Direct gateway chat session for quick interventions.";
+    case "config":
+      return "Edit ~/.openclaw/openclaw.json safely.";
+    case "debug":
+      return "Gateway snapshots, events, and manual RPC calls.";
+    case "logs":
+      return "Live tail of the gateway file logs.";
+    default:
+      return "";
+  }
 }
