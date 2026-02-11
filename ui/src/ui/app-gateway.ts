@@ -2,6 +2,15 @@ import {
   GATEWAY_EVENT_UPDATE_AVAILABLE,
   type GatewayUpdateAvailableEventPayload,
 } from "../../../src/gateway/events.js";
+import type {
+  AgentsListResult,
+  PresenceEntry,
+  HealthSnapshot,
+  StatusSummary,
+  UsageSummary,
+  UpdateAvailable,
+  CostUsageSummary,
+} from "./types.ts";
 import { CHAT_SESSIONS_ACTIVE_MINUTES, flushChatQueueForEvent } from "./app-chat.ts";
 import type { EventLogEntry } from "./app-events.ts";
 import {
@@ -35,13 +44,6 @@ import {
 import { GatewayBrowserClient } from "./gateway.ts";
 import type { Tab } from "./navigation.ts";
 import type { UiSettings } from "./storage.ts";
-import type {
-  AgentsListResult,
-  PresenceEntry,
-  HealthSnapshot,
-  StatusSummary,
-  UpdateAvailable,
-} from "./types.ts";
 
 type GatewayHost = {
   settings: UiSettings;
@@ -64,6 +66,7 @@ type GatewayHost = {
   agentsError: string | null;
   debugHealth: HealthSnapshot | null;
   usageStatusSummary: UsageSummary | null;
+  usageCostSummary: CostUsageSummary | null;
   assistantName: string;
   assistantAvatar: string | null;
   assistantAgentId: string | null;
@@ -174,6 +177,14 @@ export function connectGateway(host: GatewayHost) {
         })
         .catch(() => {
           host.usageStatusSummary = null;
+        });
+      void host.client
+        ?.request("usage.cost", { days: 14 })
+        .then((summary) => {
+          host.usageCostSummary = summary as CostUsageSummary;
+        })
+        .catch(() => {
+          host.usageCostSummary = null;
         });
       void loadNodes(host as unknown as OpenClawApp, { quiet: true });
       void loadDevices(host as unknown as OpenClawApp, { quiet: true });
