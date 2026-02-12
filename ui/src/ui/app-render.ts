@@ -188,6 +188,15 @@ export function renderApp(state: AppViewState) {
     state.usageStatusSummary ?? null,
     state.usageCostSummary ?? null,
   );
+  const quotaBackedProviders = new Set(
+    (state.usageStatusSummary?.providers ?? [])
+      .filter((p) => !p.error && Array.isArray(p.windows) && p.windows.length > 0)
+      .map((p) => p.provider),
+  );
+  const chatModelOptionsFiltered =
+    quotaBackedProviders.size > 0
+      ? state.chatModelOptions.filter((opt) => quotaBackedProviders.has(opt.provider))
+      : state.chatModelOptions;
   const basePath = normalizeBasePath(state.basePath ?? "");
   const resolvedAgentId =
     state.agentsSelectedId ??
@@ -994,7 +1003,7 @@ export function renderApp(state: AppViewState) {
                 },
                 onChatScroll: (event) => state.handleChatScroll(event),
                 onDraftChange: (next) => (state.chatMessage = next),
-                modelOptions: state.chatModelOptions,
+                modelOptions: chatModelOptionsFiltered,
                 providerQuotas: apiQuota.providers,
                 modelLoading: state.chatModelLoading,
                 modelError: state.chatModelError,
