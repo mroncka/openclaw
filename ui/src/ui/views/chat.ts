@@ -38,6 +38,14 @@ export type FallbackIndicatorStatus = {
   occurredAt: number;
 };
 
+type ChatModelOption = {
+  value: string;
+  provider: string;
+  providerLabel: string;
+  model: string;
+  label: string;
+};
+
 export type ChatProps = {
   sessionKey: string;
   onSessionKeyChange: (next: string) => void;
@@ -79,6 +87,12 @@ export type ChatProps = {
   onRefresh: () => void;
   onToggleFocusMode: () => void;
   onDraftChange: (next: string) => void;
+  modelOptions: ChatModelOption[];
+  modelLoading?: boolean;
+  modelError?: string | null;
+  selectedModel?: string | null;
+  switchingModel?: boolean;
+  onModelChange?: (modelRef: string) => void;
   onSend: () => void;
   onAbort?: () => void;
   onQueueRemove: (id: string) => void;
@@ -514,6 +528,37 @@ export function renderChat(props: ChatProps) {
 
       <div class="chat-compose">
         ${renderAttachmentPreview(props)}
+        <div class="chat-compose__meta">
+          <label class="chat-model-select">
+            <span>Model</span>
+            <select
+              .value=${props.selectedModel ?? ""}
+              ?disabled=${!props.connected || (props.modelLoading ?? false) || (props.switchingModel ?? false)}
+              @change=${(e: Event) => {
+                const value = (e.target as HTMLSelectElement).value;
+                if (!value) {
+                  return;
+                }
+                props.onModelChange?.(value);
+              }}
+            >
+              <option value="">${props.modelLoading ? "Loading models…" : "Select model"}</option>
+              ${Array.from(new Set((props.modelOptions ?? []).map((opt) => opt.providerLabel))).map(
+                (providerLabel) => html`
+                  <optgroup label=${providerLabel}>
+                    ${(props.modelOptions ?? [])
+                      .filter((opt) => opt.providerLabel === providerLabel)
+                      .map(
+                        (opt) => html`<option value=${opt.value}>${opt.label}</option>`,
+                      )}
+                  </optgroup>
+                `,
+              )}
+            </select>
+          </label>
+          ${props.switchingModel ? html`<span class="muted">Switching…</span>` : nothing}
+          ${props.modelError ? html`<span class="muted">${props.modelError}</span>` : nothing}
+        </div>
         <div class="chat-compose__row">
           <label class="field chat-compose__field">
             <span>Message</span>

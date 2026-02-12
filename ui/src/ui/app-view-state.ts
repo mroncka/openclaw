@@ -65,6 +65,17 @@ export type AppViewState = {
   fallbackStatus: FallbackStatus | null;
   chatAvatarUrl: string | null;
   chatThinkingLevel: string | null;
+  chatModelOptions: Array<{
+    value: string;
+    provider: string;
+    providerLabel: string;
+    model: string;
+    label: string;
+  }>;
+  chatModelLoading: boolean;
+  chatModelError: string | null;
+  chatSelectedModel: string | null;
+  chatSwitchingModel: boolean;
   chatQueue: ChatQueueItem[];
   chatManualRefreshInFlight: boolean;
   nodesLoading: boolean;
@@ -278,6 +289,7 @@ export type AppViewState = {
   setSessionKey: (next: string) => void;
   setChatMessage: (next: string) => void;
   handleSendChat: (messageOverride?: string, opts?: { restoreDraft?: boolean }) => Promise<void>;
+  handleSwitchChatModel: (modelRef: string) => Promise<void>;
   handleAbortChat: () => Promise<void>;
   removeQueuedMessage: (id: string) => void;
   handleChatScroll: (event: Event) => void;

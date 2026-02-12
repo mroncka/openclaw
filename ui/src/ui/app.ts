@@ -17,6 +17,7 @@ import {
 import {
   handleAbortChat as handleAbortChatInternal,
   handleSendChat as handleSendChatInternal,
+  handleSwitchChatModel as handleSwitchChatModelInternal,
   removeQueuedMessage as removeQueuedMessageInternal,
 } from "./app-chat.ts";
 import { DEFAULT_CRON_FORM, DEFAULT_LOG_LEVEL_FILTERS } from "./app-defaults.ts";
@@ -147,6 +148,17 @@ export class OpenClawApp extends LitElement {
   @state() fallbackStatus: FallbackStatus | null = null;
   @state() chatAvatarUrl: string | null = null;
   @state() chatThinkingLevel: string | null = null;
+  @state() chatModelOptions: Array<{
+    value: string;
+    provider: string;
+    providerLabel: string;
+    model: string;
+    label: string;
+  }> = [];
+  @state() chatModelLoading = false;
+  @state() chatModelError: string | null = null;
+  @state() chatSelectedModel: string | null = null;
+  @state() chatSwitchingModel = false;
   @state() chatQueue: ChatQueueItem[] = [];
   @state() chatAttachments: ChatAttachment[] = [];
   @state() chatManualRefreshInFlight = false;
@@ -466,6 +478,13 @@ export class OpenClawApp extends LitElement {
       this as unknown as Parameters<typeof handleSendChatInternal>[0],
       messageOverride,
       opts,
+    );
+  }
+
+  async handleSwitchChatModel(modelRef: string) {
+    await handleSwitchChatModelInternal(
+      this as unknown as Parameters<typeof handleSwitchChatModelInternal>[0],
+      modelRef,
     );
   }
 
