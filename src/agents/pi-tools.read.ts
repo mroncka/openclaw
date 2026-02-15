@@ -331,7 +331,50 @@ export function createSandboxedEditTool(params: SandboxToolParams) {
   const base = createEditTool(params.root, {
     operations: createSandboxEditOperations(params),
   }) as unknown as AnyAgentTool;
-  return wrapToolParamNormalization(base, CLAUDE_PARAM_GROUPS.edit);
+  return wrapSandboxPathGuard(
+    createOpenClawEditTool(wrapToolParamNormalization(base, CLAUDE_PARAM_GROUPS.edit)),
+    params.root,
+  );
+}
+
+export function createOpenClawEditTool(base: AnyAgentTool): AnyAgentTool {
+  const patched = patchToolSchemaForClaudeCompatibility(base);
+  return {
+    ...patched,
+    execute: async (toolCallId, params, signal, onUpdate) => {
+      const normalized = normalizeToolParams(params);
+      const record =
+        normalized ??
+        (params && typeof params === "object" ? (params as Record<string, unknown>) : undefined);
+      assertRequiredParams(record, CLAUDE_PARAM_GROUPS.edit, base.name);
+      const result = await base.execute(toolCallId, normalized ?? params, signal, onUpdate);
+      const filePath = typeof record?.path === "string" ? String(record.path) : "<unknown>";
+      const content = Array.isArray(result.content) ? result.content : [];
+      const hasEditedFileLine = content.some(
+        (block) =>
+          block &&
+          typeof block === "object" &&
+          (block as { type?: unknown }).type === "text" &&
+          typeof (block as { text?: unknown }).text === "string" &&
+          (block as { text: string }).text.includes(filePath),
+      );
+
+      if (hasEditedFileLine) {
+        return result;
+      }
+
+      return {
+        ...result,
+        content: [
+          ...content,
+          {
+            type: "text",
+            text: `Edited file: ${filePath}`,
+          } as TextContentBlock,
+        ],
+      };
+    },
+  };
 }
 
 export function createOpenClawReadTool(base: AnyAgentTool): AnyAgentTool {

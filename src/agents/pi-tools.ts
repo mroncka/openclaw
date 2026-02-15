@@ -34,6 +34,7 @@ import {
 import {
   assertRequiredParams,
   CLAUDE_PARAM_GROUPS,
+  createOpenClawEditTool,
   createOpenClawReadTool,
   createSandboxedEditTool,
   createSandboxedReadTool,

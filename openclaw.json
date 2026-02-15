@@ -1,0 +1,13 @@
+{
+    "memory": {
+        "qmd": {
+            "paths": [
+                {
+                    "path": "../../documentation/tasks",
+                    "name": "Vectra Tasks",
+                    "pattern": "**/*.md"
+                }
+            ]
+        }
+    }
+}

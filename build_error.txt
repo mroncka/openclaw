@@ -1,0 +1,11 @@
+
+> openclaw@2026.2.13 build:plugin-sdk:dts C:\Users\mronc\Projects\vectra\tools\openclaw
+> tsc -p tsconfig.plugin-sdk.dts.json
+
+src/agents/models-config.providers.ts(651,7): error TS2322: Type '"custom"' is not assignable to type 'ModelApi | undefined'.
+src/agents/models-config.providers.ts(652,7): error TS2322: Type '{ id: string; name: string; reasoning: boolean; input: string[]; cost: { input: number; output: number; cacheRead: number; cacheWrite: number; }; contextWindow: number; maxTokens: number; }[]' is not assignable to type 'ModelDefinitionConfig[]'.
+  Type '{ id: string; name: string; reasoning: boolean; input: string[]; cost: { input: number; output: number; cacheRead: number; cacheWrite: number; }; contextWindow: number; maxTokens: number; }' is not assignable to type 'ModelDefinitionConfig'.
+    Types of property 'input' are incompatible.
+      Type 'string[]' is not assignable to type '("text" | "image")[]'.
+        Type 'string' is not assignable to type '"text" | "image"'.
+ ELIFECYCLE  Command failed with exit code 1.
