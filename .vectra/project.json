@@ -1,0 +1,35 @@
+{
+  "schema": "vectra/1.0",
+  "id": "openclaw",
+  "name": "OpenClaw",
+  "status": "active",
+  "phase": "production",
+  "owner": "mroncka",
+  "org": null,
+  "type": "tool",
+  "priority": "medium",
+  "description": "Local 24/7 agentic digital partner \u2014 runs on Raspberry Pi without API quota limitations.",
+  "goal": "Stable always-on local agent runtime. Potential integration with Vectra Nexus via Vectra Relay.",
+  "stack": [
+    "TypeScript"
+  ],
+  "tags": [
+    "agent",
+    "local",
+    "agentic",
+    "runtime",
+    "raspberry-pi"
+  ],
+  "links": {
+    "repo": "https://github.com/mroncka/openclaw",
+    "live": null
+  },
+  "dependencies": [],
+  "dependents": [],
+  "team": [
+    "mroncka"
+  ],
+  "nexus_project_id": null,
+  "created_at": "2026-02-28",
+  "updated_at": "2026-02-28"
+}
